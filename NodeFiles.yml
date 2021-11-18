@@ -1,0 +1,7 @@
+node-1:
+  - one.txt
+  - two.txt
+
+node-2:
+  - three.txt
+  - four.txt

@@ -1,0 +1,9 @@
+node-number: 1
+node-port-number: 3000
+owned-file-directory: ./owned
+new-file-directory: ./got
+file-names:
+  - one.txt
+  - two.txt
+known-port-numbers:
+  - 
