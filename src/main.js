@@ -5,6 +5,9 @@ const prompts = require("prompts");
 const { parse } = require("yaml");
 const router = require("./routes");
 const { mapFilesToNodeNumbers } = require("./utils");
+const axios = require("axios")
+
+
 
 let CONFIG;
 let filesMap;
@@ -50,13 +53,24 @@ function getNode(fileName) {
 function onRequest(message) {
   // find the requested file by asking nodes
 
-  let node = getNode(message.request.split(" ")[1]);
+  let node = getNode(message);
+  
 
   if (!node) {
     console.log("Not found this file");
   } else {
     console.log("Found this file in node " + node);
     //search for finding node
+    let isInFriend = CONFIG.friend_nodes.find(fn => fn.node_name === node)
+    console.log(isInFriend);
+    if(isInFriend !== null && isInFriend !== undefined){
+      console.log("Found this file in friend node " + isInFriend.node_port);
+    }
+    else{
+      // not in friend node
+      console.log("Not found this file in friend node");
+
+    }
   }
   listenForRequest();
 }
