@@ -7,7 +7,7 @@ const router = require("./routes");
 const { mapFilesToNodeNumbers } = require("./utils");
 
 let CONFIG;
-let filesMap = new Map();
+let filesMap;
 
 const configPath = process.argv[2];
 const configFileContent = fs.readFileSync(configPath, "utf8");
@@ -50,17 +50,13 @@ function getNode(fileName) {
 function onRequest(message) {
   // find the requested file by asking nodes
 
-  if (!initialMessageValidate(message)) {
-    console.log("Invalid message");
-  } else {
-    let node = getNode(message.request.split(" ")[1]);
+  let node = getNode(message.request.split(" ")[1]);
 
-    if (!node) {
-      console.log("Not found this file");
-    } else {
-      console.log("Found this file in node " + node);
-      //search for finding node
-    }
+  if (!node) {
+    console.log("Not found this file");
+  } else {
+    console.log("Found this file in node " + node);
+    //search for finding node
   }
   listenForRequest();
 }
