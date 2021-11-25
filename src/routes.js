@@ -23,8 +23,8 @@ router.get("/node", (req, res) => {
 
   if (node)
     res.send({
-      nodeNumber: requestedNode?.node_name,
-      port: requestedNode?.node_port,
+      nodeNumber: node.node_name,
+      port: node.node_port,
     });
   else res.status(404);
 });
