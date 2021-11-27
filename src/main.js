@@ -5,16 +5,10 @@ const prompts = require("prompts");
 const { parse } = require("yaml");
 const router = require("./routes");
 const { mapFilesToNodeNumbers } = require("./utils");
-const axios = require("axios")
+const axios = require("axios").default;
 
-
-
-let CONFIG;
+let CONFIG = require("./config");
 let filesMap;
-
-const configPath = process.argv[2];
-const configFileContent = fs.readFileSync(configPath, "utf8");
-CONFIG = parse(configFileContent);
 
 const nodesFilesPath = process.argv[3];
 const nodesfilesContent = fs.readFileSync(nodesFilesPath, "utf8");
@@ -53,23 +47,32 @@ function getNode(fileName) {
 function onRequest(message) {
   // find the requested file by asking nodes
 
+  console.log(CONFIG);
+
   let node = getNode(message);
-  
 
   if (!node) {
     console.log("Not found this file");
   } else {
     console.log("Found this file in node " + node);
     //search for finding node
-    let isInFriend = CONFIG.friend_nodes.find(fn => fn.node_name === node)
-    console.log(isInFriend);
-    if(isInFriend !== null && isInFriend !== undefined){
-      console.log("Found this file in friend node " + isInFriend.node_port);
+    let isInFriend = CONFIG.friend_nodes.find((fn) => fn.node_name === node);
+
+    if(CONFIG.node_number === node){
+      console.log("You have this file !");
     }
-    else{
+    else if (isInFriend !== null && isInFriend !== undefined) {
+      console.log("Found this file in friend node " + isInFriend.node_port+"\n");
+
+      axios.get(`http://localhost:${isInFriend.node_port}/node?nodeNumber=${node}`).then((res) => {
+        console.log(res.data);
+      }).catch((err) => {
+        console.log("err : ");
+        console.log(err.response);
+      })
+    } else {
       // not in friend node
       console.log("Not found this file in friend node");
-
     }
   }
   listenForRequest();

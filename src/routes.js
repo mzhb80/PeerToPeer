@@ -1,6 +1,6 @@
 const express = require("express");
 const { getNearestNode } = require("./utils");
-
+const CONFIG = require("./config");
 const router = express.Router();
 
 /*
