@@ -4,7 +4,7 @@ const cors = require("cors");
 const prompts = require("prompts");
 const { parse } = require("yaml");
 const router = require("./routes");
-const { mapFilesToNodeNumbers } = require("./utils");
+const { mapFilesToNodeNumbers , getNearestNode } = require("./utils");
 const axios = require("axios").default;
 
 let CONFIG = require("./config");
@@ -44,7 +44,7 @@ function getNode(fileName) {
   return filesMap.get(fileName);
 }
 
-function onRequest(message) {
+async function onRequest(message) {
   // find the requested file by asking nodes
 
   console.log(CONFIG);
@@ -73,6 +73,32 @@ function onRequest(message) {
     } else {
       // not in friend node
       console.log("Not found this file in friend node");
+
+      console.log(getNearestNode(CONFIG.friend_nodes, CONFIG.node_number));
+      let nearestNode = getNearestNode(CONFIG.friend_nodes, CONFIG.node_number);
+      let isExist = false ;
+
+      //dummy !
+      let idx = 0;
+      let port = nearestNode.node_port
+
+      //for test replace !isExist with idx < 5 and uncomment line 100
+      while(!isExist){
+        console.log(port);
+        let request = await axios.get(`http://localhost:${port}/node?nodeNumber=${node}`).then((res) => {
+          console.log(res.data);
+
+          if(res.data.port){
+            port = res.data.port
+          }
+          else if(res.data.result === 'I have this file'){
+            isExist = true;
+            break;
+          }
+        })
+
+        // idx++;
+      }
     }
   }
   listenForRequest();

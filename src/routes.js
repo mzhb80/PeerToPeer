@@ -21,6 +21,11 @@ router.get("/node", (req, res) => {
       (node) => node.node_name === requestedNodeNumber
     ) || getNearestNode(CONFIG.friend_nodes, CONFIG.node_number);
 
+  if(CONFIG.node_number === requestedNodeNumber){
+    res.send({
+      result : 'I have this file'
+    })
+  }
   if (node)
     res.send({
       nodeNumber: node.node_name,
