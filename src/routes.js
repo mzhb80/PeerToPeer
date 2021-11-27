@@ -26,7 +26,7 @@ router.get("/node", (req, res) => {
       result : 'I have this file'
     })
   }
-  if (node)
+  else if (node)
     res.send({
       nodeNumber: node.node_name,
       port: node.node_port,

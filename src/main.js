@@ -83,7 +83,7 @@ async function onRequest(message) {
       let port = nearestNode.node_port
 
       //for test replace !isExist with idx < 5 and uncomment line 100
-      while(!isExist){
+      while(idx < 5){
         console.log(port);
         let request = await axios.get(`http://localhost:${port}/node?nodeNumber=${node}`).then((res) => {
           console.log(res.data);
@@ -93,11 +93,10 @@ async function onRequest(message) {
           }
           else if(res.data.result === 'I have this file'){
             isExist = true;
-            break;
           }
         })
 
-        // idx++;
+        idx++;
       }
     }
   }

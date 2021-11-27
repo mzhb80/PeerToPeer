@@ -1,0 +1,9 @@
+node_number: 3
+node_port: 8082
+owned_files_dir: "Node3/ownedFiles/"
+new_files_dir: "Node3/newFiles/"
+owned_files:
+  - "file6"
+friend_nodes:
+  - node_name: 2
+    node_port: 8081
