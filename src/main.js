@@ -89,7 +89,7 @@ async function onRequest(message) {
         "Found this file in friend node " + isInFriend.node_port + "\n"
       );
 
-      getFile(isInFriend.node_port, message, path.join(__dirname, `../Node${CONFIG.node_number}/newFiles/${message}`));
+      getFile(isInFriend.node_port, message, path.join(__dirname, `../${CONFIG.new_files_dir}${message}`));
     } else {
       // not in friend node
       console.log("Not found this file in friend node");
@@ -117,15 +117,8 @@ async function onRequest(message) {
             else{
               port = res.data.port
             }
-            // if (res.data.port) {
-            //   port = res.data.port;
-            // } else if (res.data.result === "I have this file") {
-            //   isExist = true;
-            //   // idx = 5;
-            // }
           });
 
-        // idx++;
       }
 
       if (isExist) {
