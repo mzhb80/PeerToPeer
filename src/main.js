@@ -4,10 +4,10 @@ const cors = require("cors");
 const prompts = require("prompts");
 const { parse } = require("yaml");
 const router = require("./routes");
-const { mapFilesToNodeNumbers , getNearestNode } = require("./utils");
+const { mapFilesToNodeNumbers, getNearestNode } = require("./utils");
 const axios = require("axios").default;
 // import * as stream from 'stream'
-const stream = require('stream');
+const stream = require("stream");
 const { promisify } = require("util");
 
 let CONFIG = require("./config");
@@ -48,6 +48,26 @@ function getNode(fileName) {
   return filesMap.get(fileName);
 }
 
+function getFile(port, fileName, destPath) {
+  const finished = promisify(stream.finished);
+  const writer = fs.createWriteStream(
+    destPath
+  );
+  axios({
+    url: `http://localhost:${port}/${fileName}`,
+    method: "get",
+    responseType: "stream",
+  })
+    .then((res) => {
+      res.data.pipe(writer);
+      finished(writer);
+    })
+    .catch((err) => {
+      console.log("\n\nerror : \n");
+      console.warn(err);
+    });
+}
+
 async function onRequest(message) {
   // find the requested file by asking nodes
 
@@ -62,67 +82,55 @@ async function onRequest(message) {
     //search for finding node
     let isInFriend = CONFIG.friend_nodes.find((fn) => fn.node_name === node);
 
-    if(CONFIG.node_number === node){
+    if (CONFIG.node_number === node) {
       console.log("You have this file !");
-    }
-    else if (isInFriend !== null && isInFriend !== undefined) {
-      console.log("Found this file in friend node " + isInFriend.node_port+"\n");
+    } else if (isInFriend !== null && isInFriend !== undefined) {
+      console.log(
+        "Found this file in friend node " + isInFriend.node_port + "\n"
+      );
 
-      axios.get(`http://localhost:${isInFriend.node_port}/node?nodeNumber=${node}`).then((res) => {
-        console.log(res.data);
-      }).catch((err) => {
-        console.log("err : ");
-        console.log(err.response);
-      })
+      getFile(isInFriend.node_port, message, path.join(__dirname, `../Node${CONFIG.node_number}/newFiles/${message}`));
     } else {
       // not in friend node
       console.log("Not found this file in friend node");
 
       console.log(getNearestNode(CONFIG.friend_nodes, CONFIG.node_number));
       let nearestNode = getNearestNode(CONFIG.friend_nodes, CONFIG.node_number);
-      let isExist = false ;
+      let isExist = false;
 
       //dummy !
       let idx = 0;
-      let port = nearestNode.node_port
+      let port = nearestNode.node_port;
 
       //for test replace !isExist with idx < 5 and uncomment line 100
-      while(idx < 5){
+      while (!isExist) {
         console.log(port);
-        let request = await axios.get(`http://localhost:${port}/node?nodeNumber=${node}`).then((res) => {
-          console.log(res.data);
+        let request = await axios
+          .get(`http://localhost:${port}/node?nodeNumber=${node}`)
+          .then((res) => {
+            console.log(res.data);
 
-          if(res.data.port){
-            port = res.data.port
-          }
-          else if(res.data.result === 'I have this file'){
-            isExist = true;
-            idx = 5;
-          }
-        })
+            if(res.data.nodeNumber === node){
+              isExist = true;
+              port = res.data.port
+            }
+            else{
+              port = res.data.port
+            }
+            // if (res.data.port) {
+            //   port = res.data.port;
+            // } else if (res.data.result === "I have this file") {
+            //   isExist = true;
+            //   // idx = 5;
+            // }
+          });
 
-        idx++;
+        // idx++;
       }
 
-      if(isExist){
-        console.log('ready for getting file from port : ' , port);
-
-        const finished = promisify(stream.finished);
-        const writer = fs.createWriteStream(path.join(__dirname , `../Node${CONFIG.node_number}/newFiles/${message}`))
-        axios({
-          url : `http://localhost:${port}/${message}` ,
-          method : 'get' ,
-          responseType : 'stream'
-        }).then(res => {
-          console.log("\n\nresponse\n");
-          console.log(res.data);
-          res.data.pipe(writer);
-          finished(writer)
-        }).catch(err => {
-          console.log("\n\nerror : \n");
-          console.warn(err)
-        })
-
+      if (isExist) {
+        console.log("ready for getting file from port : ", port);
+        getFile(port, message, path.join(__dirname, `../Node${CONFIG.node_number}/newFiles/${message}`));
       }
     }
   }
