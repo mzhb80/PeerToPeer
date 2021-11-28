@@ -12,6 +12,7 @@ const { promisify } = require("util");
 
 let CONFIG = require("./config");
 const path = require("path");
+const { requestLogger } = require("./logger");
 let filesMap;
 
 const nodesFilesPath = process.argv[3];
@@ -21,6 +22,7 @@ filesMap = mapFilesToNodeNumbers(nodesFiles);
 
 const app = express();
 app.use(cors());
+app.use(requestLogger);
 app.use(express.static(CONFIG.owned_files_dir));
 app.use("/", router);
 
@@ -41,9 +43,7 @@ function getNode(fileName) {
 
 function getFile(port, fileName, destPath) {
   const finished = promisify(stream.finished);
-  const writer = fs.createWriteStream(
-    destPath
-  );
+  const writer = fs.createWriteStream(destPath);
   axios({
     url: `http://localhost:${port}/${fileName}`,
     method: "get",
@@ -59,12 +59,9 @@ function getFile(port, fileName, destPath) {
     });
 }
 
-async function onRequest(message) {
-  // find the requested file by asking nodes
-
-  console.log(CONFIG);
-
-  let node = getNode(message);
+async function onRequest(filename) {
+  console.log(filename);
+  let node = getNode(filename);
 
   if (!node) {
     console.log("Not found this file");
@@ -80,7 +77,7 @@ async function onRequest(message) {
         "Found this file in friend node " + isInFriend.node_port + "\n"
       );
 
-      getFile(isInFriend.node_port, message, path.join(__dirname, `../${CONFIG.new_files_dir}${message}`));
+      getFile(isInFriend.node_port, filename, CONFIG.new_files_dir + filename);
     } else {
       // not in friend node
       console.log("Not found this file in friend node");
@@ -97,24 +94,32 @@ async function onRequest(message) {
       while (!isExist) {
         console.log(port);
         let request = await axios
-          .get(`http://localhost:${port}/node?nodeNumber=${node}`)
+          .get(
+            `http://localhost:${port}/node?requester=${CONFIG.node_number}&nodeNumber=${node}`
+          )
           .then((res) => {
             console.log(res.data);
 
-            if(res.data.nodeNumber === node){
+            if (res.data.nodeNumber === node) {
               isExist = true;
-              port = res.data.port
+              port = res.data.port;
+            } else {
+              port = res.data.port;
             }
-            else{
-              port = res.data.port
-            }
+            // if (res.data.port) {
+            //   port = res.data.port;
+            // } else if (res.data.result === "I have this file") {
+            //   isExist = true;
+            //   // idx = 5;
+            // }
           });
 
+        // idx++;
       }
 
       if (isExist) {
         console.log("ready for getting file from port : ", port);
-        getFile(port, message, path.join(__dirname, `../Node${CONFIG.node_number}/newFiles/${message}`));
+        getFile(port, filename, CONFIG.new_files_dir + filename);
       }
     }
   }
@@ -133,14 +138,8 @@ const promptOptions = {
   },
 };
 
-const fancyPromptOptions = {
-  type: "autocomplete",
-  name: "request",
-  message: "",
-  choices: Array.from(filesMap).map(([key, value]) => ({ title: key })),
-};
-
 function listenForRequest() {
-  // prompts(promptOptions).then((res) => onRequest(res));
-  prompts(fancyPromptOptions).then((res) => onRequest(res.request));
+  prompts(promptOptions).then((message) =>
+    onRequest(message.request.split(" ")[1])
+  );
 }
