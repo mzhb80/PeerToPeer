@@ -6,8 +6,12 @@ const { parse } = require("yaml");
 const router = require("./routes");
 const { mapFilesToNodeNumbers , getNearestNode } = require("./utils");
 const axios = require("axios").default;
+// import * as stream from 'stream'
+const stream = require('stream');
+const { promisify } = require("util");
 
 let CONFIG = require("./config");
+const path = require("path");
 let filesMap;
 
 const nodesFilesPath = process.argv[3];
@@ -93,10 +97,32 @@ async function onRequest(message) {
           }
           else if(res.data.result === 'I have this file'){
             isExist = true;
+            idx = 5;
           }
         })
 
         idx++;
+      }
+
+      if(isExist){
+        console.log('ready for getting file from port : ' , port);
+
+        const finished = promisify(stream.finished);
+        const writer = fs.createWriteStream(path.join(__dirname , `../Node${CONFIG.node_number}/newFiles/${message}`))
+        axios({
+          url : `http://localhost:${port}/${message}` ,
+          method : 'get' ,
+          responseType : 'stream'
+        }).then(res => {
+          console.log("\n\nresponse\n");
+          console.log(res.data);
+          res.data.pipe(writer);
+          finished(writer)
+        }).catch(err => {
+          console.log("\n\nerror : \n");
+          console.warn(err)
+        })
+
       }
     }
   }
