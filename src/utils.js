@@ -1,3 +1,5 @@
+let CONFIG = require("./config");
+
 function mapFilesToNodeNumbers(nodesFiles) {
   const filesMap = new Map();
   nodesFiles.forEach((node) => {
@@ -8,12 +10,15 @@ function mapFilesToNodeNumbers(nodesFiles) {
   return filesMap;
 }
 
-function getNearestNode(friend_nodes, node_number) {
-  return friend_nodes.reduce((previous, current) => {
-    return Math.abs(current - node_number) < Math.abs(previous - node_number)
-      ? current
-      : previous;
-  });
+function getNearestNodeButNode(nodeNumber) {
+  return CONFIG.friend_nodes
+    .filter((n) => n.node_name !== nodeNumber)
+    .reduce((previous, current) => {
+      return Math.abs(current - CONFIG.node_number) <
+        Math.abs(previous - CONFIG.node_number)
+        ? current
+        : previous;
+    });
 }
 
-module.exports = { mapFilesToNodeNumbers, getNearestNode };
+module.exports = { mapFilesToNodeNumbers, getNearestNodeButNode };
