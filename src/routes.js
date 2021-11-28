@@ -1,5 +1,5 @@
 const express = require("express");
-const { getNearestNode } = require("./utils");
+const { getNearestNodeButNode } = require("./utils");
 const CONFIG = require("./config");
 const router = express.Router();
 
@@ -13,20 +13,14 @@ const router = express.Router();
         description: This Node Does not Have any Friend Nodes 
 */
 router.get("/node", (req, res) => {
-  // if this node has the requested node number return
-  // otherwise return node number closest to its number
+  const requester = +req.query.requester;
   const requestedNodeNumber = +req.query.nodeNumber;
   const node =
     CONFIG.friend_nodes.find(
       (node) => node.node_name === requestedNodeNumber
-    ) || getNearestNode(CONFIG.friend_nodes, CONFIG.node_number);
+    ) || getNearestNodeButNode(requester);
 
-  if(CONFIG.node_number === requestedNodeNumber){
-    res.send({
-      result : 'I have this file'
-    })
-  }
-  else if (node)
+  if (node)
     res.send({
       nodeNumber: node.node_name,
       port: node.node_port,

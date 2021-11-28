@@ -4,7 +4,7 @@ const cors = require("cors");
 const prompts = require("prompts");
 const { parse } = require("yaml");
 const router = require("./routes");
-const { mapFilesToNodeNumbers , getNearestNode } = require("./utils");
+const { mapFilesToNodeNumbers , getNearestNodeButNode } = require("./utils");
 const axios = require("axios").default;
 // import * as stream from 'stream'
 const stream = require('stream');
@@ -68,7 +68,7 @@ async function onRequest(message) {
     else if (isInFriend !== null && isInFriend !== undefined) {
       console.log("Found this file in friend node " + isInFriend.node_port+"\n");
 
-      axios.get(`http://localhost:${isInFriend.node_port}/node?nodeNumber=${node}`).then((res) => {
+      axios.get(`http://localhost:${isInFriend.node_port}/node?requester=${CONFIG.node_number}&nodeNumber=${node}`).then((res) => {
         console.log(res.data);
       }).catch((err) => {
         console.log("err : ");
@@ -78,8 +78,8 @@ async function onRequest(message) {
       // not in friend node
       console.log("Not found this file in friend node");
 
-      console.log(getNearestNode(CONFIG.friend_nodes, CONFIG.node_number));
-      let nearestNode = getNearestNode(CONFIG.friend_nodes, CONFIG.node_number);
+      console.log(getNearestNodeButNode(null));
+      let nearestNode = getNearestNodeButNode(null);
       let isExist = false ;
 
       //dummy !
