@@ -1,6 +1,7 @@
 const express = require("express");
 const { getNearestNodeButNode } = require("./utils");
 const CONFIG = require("./config");
+
 const router = express.Router();
 
 /*
@@ -20,11 +21,7 @@ router.get("/node", (req, res) => {
       (node) => node.node_name === requestedNodeNumber
     ) || getNearestNodeButNode(requester);
 
-  if (node)
-    res.send({
-      nodeNumber: node.node_name,
-      port: node.node_port,
-    });
+  if (node) res.send(node);
   else res.status(404);
 });
 

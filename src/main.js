@@ -1,18 +1,22 @@
 const fs = require("fs");
+const stream = require("stream");
+const { promisify } = require("util");
+
 const express = require("express");
 const cors = require("cors");
 const prompts = require("prompts");
 const { parse } = require("yaml");
-const router = require("./routes");
-const { mapFilesToNodeNumbers, getNearestNodeButNode } = require("./utils");
 const axios = require("axios").default;
-// import * as stream from 'stream'
-const stream = require("stream");
-const { promisify } = require("util");
+
+const router = require("./routes");
+const {
+  mapFilesToNodeNumbers,
+  getNearestNodeButNode,
+  recursiveExit,
+} = require("./utils");
+const { requestLogger } = require("./logger");
 
 let CONFIG = require("./config");
-const path = require("path");
-const { requestLogger } = require("./logger");
 let filesMap;
 
 const nodesFilesPath = process.argv[3];
@@ -37,78 +41,85 @@ app.listen(CONFIG.node_port, () => {
   listenForRequest();
 });
 
-function getNode(fileName) {
-  return filesMap.get(fileName);
+async function getFile(port, filename) {
+  const finished = promisify(stream.finished);
+  const writer = fs.createWriteStream(CONFIG.new_files_dir + filename);
+  try {
+    const res = await axios({
+      url: `http://localhost:${port}/${filename}`,
+      method: "get",
+      responseType: "stream",
+    });
+    res.data.pipe(writer);
+    finished(writer);
+    console.log(filename + " was downloaded to " + CONFIG.new_files_dir);
+  } catch (err) {
+    console.err("error in get file", err);
+  }
 }
 
-function getFile(port, fileName, destPath) {
-  const finished = promisify(stream.finished);
-  const writer = fs.createWriteStream(destPath);
-  axios({
-    url: `http://localhost:${port}/${fileName}`,
-    method: "get",
-    responseType: "stream",
-  })
-    .then((res) => {
-      res.data.pipe(writer);
-      finished(writer);
-    })
-    .catch((err) => {
-      console.log("\n\nerror : \n");
-      console.warn(err);
-    });
+async function simpleFileFetch(filename) {
+  let targetNodeNumber = filesMap.get(filename);
+
+  if (!targetNodeNumber) {
+    console.error("No such a file was found in any node");
+    return;
+  }
+
+  if (CONFIG.node_number === targetNodeNumber) {
+    console.log("The file already exists");
+    return;
+  }
+
+  console.log("Found the file in node " + targetNodeNumber);
+
+  const possibleFriendNode = CONFIG.friend_nodes.find(
+    (n) => n.node_name === targetNodeNumber
+  );
+  if (possibleFriendNode) {
+    console.log(`Node ${targetNodeNumber} was a friend`);
+    await getFile(possibleFriendNode.node_port, filename);
+    return;
+  }
+
+  const nearestNode = getNearestNodeButNode(null);
+  let targetNode = nearestNode;
+  const visitedNodeNames = [];
+  while (targetNodeNumber !== targetNode.node_name) {
+    if (visitedNodeNames.includes(targetNode.node_name)) {
+      console.error(
+        `Loop detected: ` +
+          visitedNodeNames.join(" -> ") +
+          " -> " +
+          targetNode.node_name
+      );
+      console.error("Terminating...");
+      return;
+    }
+
+    visitedNodeNames.push(targetNode.node_name);
+    try {
+      const res = await axios.get(
+        `http://localhost:${targetNode.node_port}/node?requester=${CONFIG.node_number}&nodeNumber=${targetNodeNumber}`
+      );
+      targetNode = res.data;
+    } catch (err) {
+      console.error(
+        `Node ${targetNode.node_name} does not have any friend node`
+      );
+      console.error("Terminating...");
+      return;
+    }
+  }
+
+  console.log(
+    `Port of nonfriend node ${targetNode.node_name} was found (${targetNode.node_port})`
+  );
+  await getFile(targetNode.node_port, filename);
 }
 
 async function onRequest(filename) {
-  console.log(filename);
-  let node = getNode(filename);
-
-  if (!node) {
-    console.log("Not found this file");
-  } else {
-    console.log("Found this file in node " + node);
-    //search for finding node
-    let isInFriend = CONFIG.friend_nodes.find((fn) => fn.node_name === node);
-
-    if (CONFIG.node_number === node) {
-      console.log("You have this file !");
-    } else if (isInFriend !== null && isInFriend !== undefined) {
-      console.log(
-        "Found this file in friend node " + isInFriend.node_port + "\n"
-      );
-
-      getFile(isInFriend.node_port, filename, CONFIG.new_files_dir + filename);
-    } else {
-      // not in friend node
-      console.log("Not found this file in friend node");
-      let nearestNode = getNearestNodeButNode(null);
-      let isExist = false;
-
-      let port = nearestNode.node_port;
-
-      while (!isExist) {
-        let request = await axios
-          .get(
-            `http://localhost:${port}/node?requester=${CONFIG.node_number}&nodeNumber=${node}`
-          )
-          .then((res) => {
-
-            if (res.data.nodeNumber === node) {
-              isExist = true;
-              port = res.data.port;
-            } else {
-              port = res.data.port;
-            }
-          });
-      }
-
-      if (isExist) {
-        console.log("ready for getting file from port : ", port);
-        getFile(port, filename, CONFIG.new_files_dir + filename);
-        console.log("file got!");
-      }
-    }
-  }
+  await simpleFileFetch(filename);
   listenForRequest();
 }
 

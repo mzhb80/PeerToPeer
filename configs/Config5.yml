@@ -1,0 +1,9 @@
+node_number: 5
+node_port: 8085
+owned_files_dir: "Node5/ownedFiles/"
+new_files_dir: "Node5/newFiles/"
+owned_files:
+  - "file5"
+friend_nodes:
+  - node_name: 2
+    node_port: 8081

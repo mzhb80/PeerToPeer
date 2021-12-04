@@ -21,4 +21,7 @@ function getNearestNodeButNode(nodeNumber) {
     });
 }
 
-module.exports = { mapFilesToNodeNumbers, getNearestNodeButNode };
+module.exports = {
+  mapFilesToNodeNumbers,
+  getNearestNodeButNode,
+};
