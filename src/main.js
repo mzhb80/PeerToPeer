@@ -81,24 +81,17 @@ async function onRequest(filename) {
     } else {
       // not in friend node
       console.log("Not found this file in friend node");
-
-      console.log(getNearestNodeButNode(null));
       let nearestNode = getNearestNodeButNode(null);
       let isExist = false;
 
-      //dummy !
-      let idx = 0;
       let port = nearestNode.node_port;
 
-      //for test replace !isExist with idx < 5 and uncomment line 100
       while (!isExist) {
-        console.log(port);
         let request = await axios
           .get(
             `http://localhost:${port}/node?requester=${CONFIG.node_number}&nodeNumber=${node}`
           )
           .then((res) => {
-            console.log(res.data);
 
             if (res.data.nodeNumber === node) {
               isExist = true;
@@ -106,20 +99,13 @@ async function onRequest(filename) {
             } else {
               port = res.data.port;
             }
-            // if (res.data.port) {
-            //   port = res.data.port;
-            // } else if (res.data.result === "I have this file") {
-            //   isExist = true;
-            //   // idx = 5;
-            // }
           });
-
-        // idx++;
       }
 
       if (isExist) {
         console.log("ready for getting file from port : ", port);
         getFile(port, filename, CONFIG.new_files_dir + filename);
+        console.log("file got!");
       }
     }
   }
