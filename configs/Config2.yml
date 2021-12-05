@@ -7,3 +7,18 @@ owned_files:
 friend_nodes:
   - node_name: 3
     node_port: 8083
+  - 
+    node_name: 4
+    node_port: 8084
+  -
+    node_name: 5
+    node_port: 8085
+  -
+    node_name: 6
+    node_port: 8086
+  -
+    node_name: 7
+    node_port: 8087
+  -
+    node_name: 8
+    node_port: 8088
