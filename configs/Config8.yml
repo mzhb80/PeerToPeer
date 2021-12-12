@@ -6,4 +6,11 @@ owned_files:
   - "file8"
 friend_nodes:
   - node_name: 2
-    node_port: 8081
+    node_port: 8082
+  - node_name: 4
+    node_port: 8084
+  - node_name: 5
+    node_port: 8085
+  - node_name: 7
+    node_port: 8087
+    

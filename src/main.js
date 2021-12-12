@@ -99,6 +99,7 @@ async function simpleFileFetch(filename) {
 
     visitedNodeNames.push(targetNode.node_name);
     try {
+      console.log(`Requesting to node ${targetNode.node_name}`);
       const res = await axios.get(
         `http://localhost:${targetNode.node_port}/node?requester=${CONFIG.node_number}&nodeNumber=${targetNodeNumber}`
       );

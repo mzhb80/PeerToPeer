@@ -5,8 +5,5 @@ new_files_dir: "Node3/newFiles/"
 owned_files:
   - "file3"
 friend_nodes:
-  - node_name: 4
-    node_port: 8084
-  -
-    node_name: 2
-    node_port: 8081
+  - node_name: 5
+    node_port: 8085
