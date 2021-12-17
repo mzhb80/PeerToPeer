@@ -12,7 +12,6 @@ const router = require("./routes");
 const {
   mapFilesToNodeNumbers,
   getNearestNodeButNode,
-  recursiveExit,
 } = require("./utils");
 const { requestLogger } = require("./logger");
 
@@ -125,7 +124,8 @@ async function onRequest(filename) {
     if(type.type === 0){
       await simpleFileFetch(filename);
     }else if(type.type === 1){
-      console.log('advanced');
+      // console.log('advanced');
+      await advancedFileFetch(filename)
     }
   })
   
@@ -158,4 +158,31 @@ const requestType = {
   choices: [
       'Simple' , 'Advanced'
   ]
+}
+
+async function advancedFileFetch(filename){
+  let targetNodeNumber = filesMap.get(filename);
+
+  if (!targetNodeNumber) {
+    console.error("No such a file was found in any node");
+    return;
+  }
+
+  if (CONFIG.node_number === targetNodeNumber) {
+    console.log("The file already exists");
+    return;
+  }
+
+  console.log("Found the file in node " + targetNodeNumber);
+
+  const possibleFriendNode = CONFIG.friend_nodes.find(
+    (n) => n.node_name === targetNodeNumber
+  );
+  if (possibleFriendNode) {
+    console.log(`Node ${targetNodeNumber} was a friend`);
+    await getFile(possibleFriendNode.node_port, filename);
+    return;
+  }
+
+  let excludeNodes = []
 }

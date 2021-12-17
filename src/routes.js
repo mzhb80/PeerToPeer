@@ -1,12 +1,11 @@
 const express = require("express");
-const { getNearestNodeButNode , getNearNodeWithoutExclude } = require("./utils");
+const { getNearestNodeButNode, getNearNodeWithoutExclude } = require("./utils");
 const CONFIG = require("./config");
 
 const router = express.Router();
-const app = express()
-const bodyParser = require('body-parser')
+const bodyParser = require("body-parser");
 
-const jsonParser = bodyParser.json()
+const jsonParser = bodyParser.json();
 /*
   get:
     description: Get a Node by its Node Number
@@ -28,15 +27,19 @@ router.get("/node", (req, res) => {
   else res.status(404);
 });
 
-router.post('/node/v2' , jsonParser ,(req , res) => {
-  const requester = +req.body.requester  ;
-  const requestedNumber = +req.body.nodeNumber
-  const excludeNodes = req.body.excludeNodes
+router.post("/node/v2", jsonParser, (req, res) => {
+  const requester = +req.body.requester;
+  const requestedNumber = +req.body.nodeNumber;
+  const excludeNodes = req.body.excludeNodes;
 
-  console.log(getNearNodeWithoutExclude(requester , excludeNodes));
-  // console.log(req.body);
-  // res.send('okeb')
-})
+  // console.log(getNearNodeWithoutExclude(requester, excludeNodes));
 
+  const node =
+    CONFIG.friend_nodes.find((node) => node.node_name === requestedNumber) ||
+    getNearNodeWithoutExclude(requester, excludeNodes);
+  
+  if(node) res.send(node)
+  else res.status(404)
+});
 
 module.exports = router;
