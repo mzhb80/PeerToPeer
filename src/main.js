@@ -90,7 +90,7 @@ async function simpleFindNode(targetNodeNumber) {
 }
 
 async function advancedFindNode(targetNodeNumber) {
-  
+  return null;
 }
 
 async function fetchFile(filename, advanced) {
