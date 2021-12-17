@@ -90,6 +90,39 @@ async function simpleFindNode(targetNodeNumber) {
 }
 
 async function advancedFindNode(targetNodeNumber) {
+  const visitedFriends = [];
+
+  let targetNode;
+  while (visitedFriends.length !== CONFIG.friend_nodes.length) {
+    const nearest = getNearestNodeExcluing(visitedFriends);
+    targetNode = nearest;
+    const visitedNodeNames = [];
+
+    while (targetNodeNumber !== targetNode.node_name) {
+      visitedNodeNames.push(targetNode.node_name);
+      try {
+        console.log(`Requesting to node ${targetNode.node_name}`);
+        const res = await axios.post(
+          `http://localhost:${targetNode.node_port}/node/v2`,
+          {
+            requester: CONFIG.node_number,
+            excludeNodes: visitedNodeNames,
+            nodeNumber: targetNodeNumber,
+          }
+        );
+        targetNode = res.data;
+      } catch (err) {
+        console.error(
+          `Node ${targetNode.node_name} does not have any more nodes`
+        );
+        break;
+      }
+    }
+
+    if (targetNodeNumber === targetNode.node_name) return targetNode;
+    visitedFriends.push(nearest);
+  }
+
   return null;
 }
 
