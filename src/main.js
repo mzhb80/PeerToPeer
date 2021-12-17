@@ -9,10 +9,7 @@ const { parse } = require("yaml");
 const axios = require("axios").default;
 
 const router = require("./routes");
-const {
-  mapFilesToNodeNumbers,
-  getNearestNodeButNode,
-} = require("./utils");
+const { mapFilesToNodeNumbers, getNearestNodeExcluing } = require("./utils");
 const { requestLogger } = require("./logger");
 
 let CONFIG = require("./config");
@@ -57,7 +54,46 @@ async function getFile(port, filename) {
   }
 }
 
-async function simpleFileFetch(filename) {
+async function simpleFindNode(targetNodeNumber) {
+  const nearestNode = getNearestNodeExcluing([]);
+  let targetNode = nearestNode;
+  const visitedNodeNames = [];
+  while (targetNodeNumber !== targetNode.node_name) {
+    if (visitedNodeNames.includes(targetNode.node_name)) {
+      console.error(
+        `Loop detected: ` +
+          visitedNodeNames.join(" -> ") +
+          " -> " +
+          targetNode.node_name
+      );
+      console.error("Terminating...");
+      return null;
+    }
+
+    visitedNodeNames.push(targetNode.node_name);
+    try {
+      console.log(`Requesting to node ${targetNode.node_name}`);
+      const res = await axios.get(
+        `http://localhost:${targetNode.node_port}/node?requester=${CONFIG.node_number}&nodeNumber=${targetNodeNumber}`
+      );
+      targetNode = res.data;
+    } catch (err) {
+      console.error(
+        `Node ${targetNode.node_name} does not have any friend node`
+      );
+      console.error("Terminating...");
+      return null;
+    }
+  }
+
+  return targetNode;
+}
+
+async function advancedFindNode(targetNodeNumber) {
+  
+}
+
+async function fetchFile(filename, advanced) {
   let targetNodeNumber = filesMap.get(filename);
 
   if (!targetNodeNumber) {
@@ -81,54 +117,34 @@ async function simpleFileFetch(filename) {
     return;
   }
 
-  const nearestNode = getNearestNodeButNode(null);
-  let targetNode = nearestNode;
-  const visitedNodeNames = [];
-  while (targetNodeNumber !== targetNode.node_name) {
-    if (visitedNodeNames.includes(targetNode.node_name)) {
-      console.error(
-        `Loop detected: ` +
-          visitedNodeNames.join(" -> ") +
-          " -> " +
-          targetNode.node_name
-      );
-      console.error("Terminating...");
-      return;
-    }
+  let node;
+  if (advanced) node = await advancedFindNode(targetNodeNumber);
+  else node = await simpleFindNode(targetNodeNumber);
 
-    visitedNodeNames.push(targetNode.node_name);
-    try {
-      console.log(`Requesting to node ${targetNode.node_name}`);
-      const res = await axios.get(
-        `http://localhost:${targetNode.node_port}/node?requester=${CONFIG.node_number}&nodeNumber=${targetNodeNumber}`
-      );
-      targetNode = res.data;
-    } catch (err) {
-      console.error(
-        `Node ${targetNode.node_name} does not have any friend node`
-      );
-      console.error("Terminating...");
-      return;
-    }
+  if (!node && !advanced) {
+    console.log("Could not find node");
+    const res = await prompts({
+      type: "confirm",
+      name: "advanced",
+      message: "Would like to do an advanced search?",
+    });
+
+    if (res.advanced) fetchFile(filename, true);
+    return;
+  } else if (!node && advanced) {
+    console.log("Advanced search failed");
+    return;
   }
 
   console.log(
-    `Port of nonfriend node ${targetNode.node_name} was found (${targetNode.node_port})`
+    `Port of nonfriend node ${node.node_name} was found (${node.node_port})`
   );
-  await getFile(targetNode.node_port, filename);
+  await getFile(node.node_port, filename);
+  return;
 }
 
 async function onRequest(filename) {
-  await prompts(requestType).then(async type => {
-    // console.log(type);
-    if(type.type === 0){
-      await simpleFileFetch(filename);
-    }else if(type.type === 1){
-      // console.log('advanced');
-      await advancedFileFetch(filename)
-    }
-  })
-  
+  await fetchFile(filename, false);
   listenForRequest();
 }
 
@@ -146,44 +162,6 @@ const promptOptions = {
 
 function listenForRequest() {
   prompts(promptOptions).then((message) =>
-    onRequest(message.request.split(" ")[1]),
+    onRequest(message.request.split(" ")[1])
   );
-}
-
-//extra score
-const requestType = {
-  type: 'select',
-  name: 'type',
-  message: 'Choose a request type',
-  choices: [
-      'Simple' , 'Advanced'
-  ]
-}
-
-async function advancedFileFetch(filename){
-  //check here
-  let targetNodeNumber = filesMap.get(filename);
-
-  if (!targetNodeNumber) {
-    console.error("No such a file was found in any node");
-    return;
-  }
-
-  if (CONFIG.node_number === targetNodeNumber) {
-    console.log("The file already exists");
-    return;
-  }
-
-  console.log("Found the file in node " + targetNodeNumber);
-
-  const possibleFriendNode = CONFIG.friend_nodes.find(
-    (n) => n.node_name === targetNodeNumber
-  );
-  if (possibleFriendNode) {
-    console.log(`Node ${targetNodeNumber} was a friend`);
-    await getFile(possibleFriendNode.node_port, filename);
-    return;
-  }
-
-  let excludeNodes = []
 }

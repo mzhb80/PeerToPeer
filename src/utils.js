@@ -10,33 +10,18 @@ function mapFilesToNodeNumbers(nodesFiles) {
   return filesMap;
 }
 
-function getNearestNodeButNode(nodeNumber) {
+function getNearestNodeExcluing(nodeNumbers) {
   return CONFIG.friend_nodes
-    .filter((n) => n.node_name !== nodeNumber)
+    .filter((n) => !nodeNumbers.includes(n.node_name))
     .reduce((previous, current) => {
-      return Math.abs(current - CONFIG.node_number) <
-        Math.abs(previous - CONFIG.node_number)
+      return Math.abs(current.node_name - CONFIG.node_number) <
+        Math.abs(previous.node_name - CONFIG.node_number)
         ? current
         : previous;
     });
 }
 
-function getNearNodeWithoutExclude(nodeNumber , exclude ){
-  //check here
-  let sortedFriends = CONFIG.friend_nodes.sort((a , b) => a.node_name - b.node_name)
-  let foundedNode;
-  for(let node in sortedFriends){
-    if(!exclude.includes(sortedFriends[node].node_name)){
-      foundedNode = sortedFriends[node]
-      break;
-    }
-  }
-
-  return foundedNode
-}
-
 module.exports = {
   mapFilesToNodeNumbers,
-  getNearestNodeButNode,
-  getNearNodeWithoutExclude
+  getNearestNodeExcluing,
 };
