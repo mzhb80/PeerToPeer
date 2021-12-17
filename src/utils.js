@@ -22,6 +22,7 @@ function getNearestNodeButNode(nodeNumber) {
 }
 
 function getNearNodeWithoutExclude(nodeNumber , exclude ){
+  //check here
   let sortedFriends = CONFIG.friend_nodes.sort((a , b) => a.node_name - b.node_name)
   let foundedNode;
   for(let node in sortedFriends){

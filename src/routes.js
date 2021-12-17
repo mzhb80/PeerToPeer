@@ -28,12 +28,10 @@ router.get("/node", (req, res) => {
 });
 
 router.post("/node/v2", jsonParser, (req, res) => {
+  //check here
   const requester = +req.body.requester;
   const requestedNumber = +req.body.nodeNumber;
   const excludeNodes = req.body.excludeNodes;
-
-  // console.log(getNearNodeWithoutExclude(requester, excludeNodes));
-
   const node =
     CONFIG.friend_nodes.find((node) => node.node_name === requestedNumber) ||
     getNearNodeWithoutExclude(requester, excludeNodes);
