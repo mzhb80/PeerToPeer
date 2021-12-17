@@ -1,9 +1,12 @@
 const express = require("express");
-const { getNearestNodeButNode } = require("./utils");
+const { getNearestNodeButNode , getNearNodeWithoutExclude } = require("./utils");
 const CONFIG = require("./config");
 
 const router = express.Router();
+const app = express()
+const bodyParser = require('body-parser')
 
+const jsonParser = bodyParser.json()
 /*
   get:
     description: Get a Node by its Node Number
@@ -24,5 +27,16 @@ router.get("/node", (req, res) => {
   if (node) res.send(node);
   else res.status(404);
 });
+
+router.post('/node/v2' , jsonParser ,(req , res) => {
+  const requester = +req.body.requester  ;
+  const requestedNumber = +req.body.nodeNumber
+  const excludeNodes = req.body.excludeNodes
+
+  console.log(getNearNodeWithoutExclude(requester , excludeNodes));
+  // console.log(req.body);
+  // res.send('okeb')
+})
+
 
 module.exports = router;

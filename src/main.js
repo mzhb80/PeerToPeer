@@ -120,7 +120,15 @@ async function simpleFileFetch(filename) {
 }
 
 async function onRequest(filename) {
-  await simpleFileFetch(filename);
+  await prompts(requestType).then(async type => {
+    // console.log(type);
+    if(type.type === 0){
+      await simpleFileFetch(filename);
+    }else if(type.type === 1){
+      console.log('advanced');
+    }
+  })
+  
   listenForRequest();
 }
 
@@ -138,6 +146,16 @@ const promptOptions = {
 
 function listenForRequest() {
   prompts(promptOptions).then((message) =>
-    onRequest(message.request.split(" ")[1])
+    onRequest(message.request.split(" ")[1]),
   );
+}
+
+//extra score
+const requestType = {
+  type: 'select',
+  name: 'type',
+  message: 'Choose a request type',
+  choices: [
+      'Simple' , 'Advanced'
+  ]
 }

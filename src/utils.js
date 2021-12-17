@@ -21,7 +21,12 @@ function getNearestNodeButNode(nodeNumber) {
     });
 }
 
+function getNearNodeWithoutExclude(nodeNumber , exclude ){
+  return CONFIG.friend_nodes.sort((a , b) => a.node_name - b.node_name)
+}
+
 module.exports = {
   mapFilesToNodeNumbers,
   getNearestNodeButNode,
+  getNearNodeWithoutExclude
 };
