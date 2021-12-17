@@ -1,6 +1,9 @@
+const requestIp = require("request-ip");
+
 const requestLogger = function (req, res, next) {
-  let logMessage = "Request from " + req.socket.remoteAddress + " for ";
-  if (req.path === "/node") logMessage += "port of node " + req.query.nodeNumber;
+  let logMessage = "Request for ";
+  if (req.path === "/node")
+    logMessage += "port of node " + req.query.nodeNumber;
   else logMessage += req.path.slice(1);
   console.log(logMessage);
   next();
