@@ -120,7 +120,7 @@ async function advancedFindNode(targetNodeNumber) {
     }
 
     if (targetNodeNumber === targetNode.node_name) return targetNode;
-    visitedFriends.push(nearest);
+    visitedFriends.push(nearest.node_name);
   }
 
   return null;
